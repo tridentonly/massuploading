@@ -1,0 +1,558 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp" xmlns:smtp="http://www.mulesoft.org/schema/mule/smtp" xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd
+http://www.mulesoft.org/schema/mule/smtp http://www.mulesoft.org/schema/muSle/smtp/current/mule-smtp.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd">
+    <file:connector name="File" autoDelete="false" streaming="true" validateConnections="true"  doc:name="File" outputAppend="true" pollingFrequency="5000"/>
+    <validation:config name="Validation_Configuration" doc:name="Validation Configuration"/>
+    <sfdc:config name="Salesforce__Basic_Authentication" username="${salesforce-username}" password="${salesforce-password}" url="${salesforce-url}" doc:name="Salesforce: Basic Authentication" disableSessionInvalidation="true"/>
+    <flow name="inactive-file">
+        <set-variable variableName="index1" value="#[flowVars.counter-1]" doc:name="Variable"/>
+        <choice doc:name="Choice">
+            <when expression="#[payload[0].success=='true']">
+                <dw:transform-message doc:name="Transform Message">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	Account: flowVars.currentRecord.Account__c,
+	"Status" : "Success",
+	"Error": null,
+	Active: flowVars.currentRecord.Active__c,
+	//"Approved Destination": flowVars.currentRecord[flowVars.index1].Approved_Destination__c,
+	//"Case-by-case pricing": flowVars.currentRecord[flowVars.index1].Case_by_case_pricing__c,
+	//Contract: flowVars.currentRecord[flowVars.index1].,
+	//"Contract Id": flowVars.currentRecord[flowVars.index1].Contract_Id__c,
+	//"Current Threshold Value": flowVars.currentRecord[flowVars.index1].,
+	//"Customer Price Book": flowVars.currentRecord[flowVars.index1].Customer_Price_Book__c,
+	//"Expiration Date": flowVars.currentRecord[flowVars.index1].,
+	//"Item Description": flowVars.currentRecord[flowVars.index1].Item_Description__c,
+	"Minimum Bill Qty": flowVars.currentRecord[flowVars.index1].Minimum_Bill_Qty__c,
+	"Minimum Price": flowVars.currentRecord[flowVars.index1].Minimum_Price__c,
+	//"Minimum Type": flowVars.currentRecord[flowVars.index1].,
+	Price: flowVars.currentRecord.Price__c,
+	"Pricing Applied": flowVars.currentRecord[flowVars.index1].Pricing_Applied__c,
+	"Pricing Location": flowVars.currentRecord.Stericycle_Location__c,
+	Product: flowVars.currentRecord.Product__c,
+	//"Product Family": flowVars.currentRecord[flowVars.index1].Product_Family__c,
+	"Product Description": flowVars.currentRecord[flowVars.index1].Product_Description__c,
+	"Profile Special Pricing": flowVars.currentRecord[flowVars.index1].Profile_Special_Pricing__c,
+//Programs: flowVars.currentRecord[flowVars.index1].,
+	//Project: flowVars.currentRecord[flowVars.index1].,
+	//"Project Id": flowVars.currentRecord[flowVars.index1].,
+	//Segment: flowVars.currentRecord[flowVars.index1].,
+	//Source: flowVars.currentRecord[flowVars.index1].,
+	"Subscription Price": flowVars.currentRecord[flowVars.index1].Subscription_Price__c,
+	//"Subscription Price End Date": flowVars.currentRecord[flowVars.index1].,
+	//"Subscription Price Start Date": flowVars.currentRecord[flowVars.index1].,
+	//"Subscription Type": flowVars.currentRecord[flowVars.index1].,
+	Threshold: flowVars.currentRecord[flowVars.index1].Threshold_Price__c,
+	//"Threshold Price": flowVars.currentRecord[flowVars.index1].,
+	UOM: flowVars.currentRecord.UOM__c,
+	//Verified: flowVars.currentRecord[flowVars.index1].,
+	"Waste Profile": flowVars.currentRecord[flowVars.index1].Waste_Profile__c
+
+}]]></dw:set-payload>
+                </dw:transform-message>
+                <set-variable variableName="recordPayload" value="#[flowVars.recordPayload] , #[payload]" doc:name="set recordPayload Variable"/>
+
+            </when>
+            <otherwise>
+                <set-variable variableName="msg" value="#[payload.errors.toString()]" doc:name="Variable"/>
+                <dw:transform-message doc:name="Transform Message">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	Account: flowVars.inactiveRecords.Account__c,
+	"Status" : "Business Error",
+	"Error": flowVars.msg,
+	Active: flowVars.inactiveRecords.Active__c,
+	
+	"Minimum Bill Qty": flowVars.inactiveRecords[0].Minimum_Bill_Qty__c,
+	"Minimum Price": flowVars.inactiveRecords[0].Minimum_Price__c,
+	
+	Price: flowVars.inactiveRecords.Price__c,
+	"Pricing Applied": flowVars.inactiveRecords[0].Pricing_Applied__c,
+	"Pricing Location": flowVars.inactiveRecords.Stericycle_Location__c,
+	Product: flowVars.inactiveRecords.Product__c,
+	"Product Family": flowVars.inactiveRecords[0].Product_Family__c,
+	"Product Description": flowVars.inactiveRecords[0].Product_Description__c,
+	"Profile Special Pricing": flowVars.inactiveRecords[0].Profile_Special_Pricing__c,
+
+	"Subscription Price": flowVars.inactiveRecords[0].Subscription_Price__c,
+	
+	
+	Threshold: flowVars.inactiveRecords[0].Threshold_Price__c,
+	
+	UOM: flowVars.inactiveRecords.UOM__c,
+	
+	"Waste Profile": flowVars.inactiveRecords[0].Waste_Profile__c
+}
+]]></dw:set-payload>
+                </dw:transform-message>
+                <set-variable variableName="recordPayload" value="#[flowVars.recordPayload] , #[payload]" doc:name="set recordPayload Variable"/>
+
+            </otherwise>
+        </choice>
+        <set-payload value="[#[flowVars.recordPayload]]" mimeType="application/json" doc:name="Set Payload"/>
+        <choice doc:name="Choice">
+            <when expression="#[flowVars.index1 == 0]">
+                <dw:transform-message doc:name="Transform Message">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/csv
+---
+payload -null]]></dw:set-payload>
+                </dw:transform-message>
+            </when>
+            <otherwise>
+                <dw:transform-message doc:name="Transform Message">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/csv header=false
+---
+payload -null]]></dw:set-payload>
+                </dw:transform-message>
+            </otherwise>
+        </choice>
+        <file:outbound-endpoint path="\\stericorp.com\shares\SteriVision\Mass Upload\Dev\Archive" outputPattern="#[sessionVars.fileName]" connector-ref="File" responseTimeout="10000" doc:name="File"/>
+
+    </flow>
+    <flow name="massuploadingFlow">
+        <file:inbound-endpoint path="${ipFile}" connector-ref="File" pollingFrequency="300000" responseTimeout="10000" doc:name="File" moveToDirectory="${processedFile}"/>
+        <set-session-variable variableName="fileName" value="#[message.inboundProperties.originalFilename]" doc:name="Session Variable"/>
+        <byte-array-to-object-transformer doc:name="Byte Array to Object"/>
+        <dw:transform-message doc:name="Transform Message" metadata:id="4d074e69-4259-4a3e-b1ac-fcf1047e34c6">
+            <dw:input-payload mimeType="application/csv" doc:sample="sample_data\list_csv.csv"/>
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+payload filter ($.Active == 'TRUE') map ((payload01 , indexOfPayload01) -> {
+	Account__c: payload01.Account,
+	//(Case_by_case_pricing__c: payload01."Case-by-case pricing" as :boolean) when (payload01."Case-by-case pricing" != null and payload01."Case-by-case pricing" != ""),
+	//Customer_Price_Book__c: payload01."Customer Price Book",
+	//Item_Description__c: payload01."Item Description",
+	(Price__c: payload01.Price as :string) when (payload01.Price != null and payload01.Price != ""),
+	//Product_Family__c: payload01."Product Family",
+	(Product__c: lookup("massuploadingFlow2", payload01.Product)[0].Id) when lookup("massuploadingFlow2", payload01.Product)[0].Id != null,
+	Product_Description__c: payload01."Product Description",
+	(Profile_Special_Pricing__c: payload01."Profile Special Pricing" as :boolean) when (payload01."Profile Special Pricing" != null and payload01."Profile Special Pricing" != ""), 
+	(Stericycle_Location__c: lookup("massuploadingFlow1", payload01."Pricing Location")[0].Id) when lookup("massuploadingFlow1", payload01."Pricing Location")[0].Id != null,
+	UOM__c: payload01.UOM,
+	Waste_Profile__c: payload01."Waste Profile",
+	//Project_Id__c: payload01."Project Id",
+	//Contract_Id__c: payload01."Contract Id",
+	Threshold_Price__c: payload01."Threshold Price",
+	(Subscription_Price__c: payload01."Subscription Price" as :string) when (payload01."Subscription Price" != null and payload01."Subscription Price" != ""),
+	(Minimum_Price__c: payload01."Minimum Price" as :string) when (payload01."Minimum Price" != null and payload01."Minimum Price" != ""),
+	(Minimum_Bill_Qty__c: payload01."Minimum Bill Qty" as :number) when (payload01."Minimum Bill Qty" != null and payload01."Minimum Bill Qty" != ""),
+	(Active__c: payload01.Active as :boolean) when (payload01.Active != null and payload01.Active != ""),
+	Pricing_Applied__c: payload01."Pricing Applied",
+	Minimum_Type__c: payload01."Minimum Type",
+	//(Current_Threshold_Value__c: payload01."Current Threshold Value" as :number) when (payload01."Current Threshold Value" != null and payload01."Current Threshold Value" != ""),
+	
+	(Verified__c: payload01.Verified as :boolean) when (payload01.Verified != null and payload01.Verified != ""),
+	(Expiration_Date__c: (payload01."Expiration Date" ++ 'T00:00:00.000Z') as :datetime {format: "MM/dd/yyyy'T'HH:mm:ss.SSSX"}) when (payload01."Expiration Date" != null and payload01."Expiration Date" != "" ),
+	Segment__c: payload01.Segment,
+	//Approved_Destination__c: payload01."Approved Destination",
+   (SubscriptionPriceEndDate__c: (payload01."Subscription Price End Date" ++ 'T00:00:00.000Z') as :datetime {format: "MM/dd/yyyy'T'HH:mm:ss.SSSX"}) when (payload01."Subscription Price End Date" != null and payload01."Subscription Price End Date" != ""),
+(SubscriptionPriceStartDate__c: (payload01."Subscription Price Start Date" ++ 'T00:00:00.000Z') as :datetime {format: "MM/dd/yyyy'T'HH:mm:ss.SSSX"}) when (payload01."Subscription Price Start Date" != null and payload01."Subscription Price Start Date" != ""),
+	SubscriptionType__c: payload01."Subscription Type",
+	
+	Contract__c: (lookup("ContractId", payload01.Contract)[0].Id when lookup("ContractId", payload01.Contract)[0].Id != null otherwise "") when (payload01.Contract != null and payload01.Contract != "") otherwise "",
+	Programs__c: payload01.Programs,
+	Source__c:"Mass Upload",
+	Threshold__c: payload01.Threshold,
+	Waste_Profile__c: payload01."Waste Profile",
+	Zone__c: payload01."Zone"
+})]]></dw:set-payload>
+            <dw:set-variable variableName="inactiveRecords"><![CDATA[%dw 1.0
+%output application/java
+---
+payload filter ($.Active == 'FALSE') map ((payload01 , indexOfPayload01) -> {
+	Account__c: payload01.Account,
+	//(Case_by_case_pricing__c: payload01."Case-by-case pricing" as :boolean) when (payload01."Case-by-case pricing" != null and payload01."Case-by-case pricing" != ""),
+	//Customer_Price_Book__c: payload01."Customer Price Book",
+	//Item_Description__c: payload01."Item Description",
+	(Price__c: payload01.Price as :string) when (payload01.Price != null and payload01.Price != ""),
+	//Product_Family__c: payload01."Product Family",
+	(Product__c: lookup("massuploadingFlow2", payload01.Product)[0].Id) when lookup("massuploadingFlow2", payload01.Product)[0].Id != null,
+	Product_Description__c: payload01."Product Description",
+	(Profile_Special_Pricing__c: payload01."Profile Special Pricing" as :boolean) when (payload01."Profile Special Pricing" != null and payload01."Profile Special Pricing" != ""), 
+	(Stericycle_Location__c: lookup("massuploadingFlow1", payload01."Pricing Location")[0].Id) when lookup("massuploadingFlow1", payload01."Pricing Location")[0].Id != null,
+	UOM__c: payload01.UOM,
+	Waste_Profile__c: payload01."Waste Profile",
+	//Project_Id__c: payload01."Project Id",
+	//Contract_Id__c: payload01."Contract Id",
+	Threshold_Price__c: payload01."Threshold Price",
+	(Subscription_Price__c: payload01."Subscription Price" as :string) when (payload01."Subscription Price" != null and payload01."Subscription Price" != ""),
+	(Minimum_Price__c: payload01."Minimum Price" as :string) when (payload01."Minimum Price" != null and payload01."Minimum Price" != ""),
+	(Minimum_Bill_Qty__c: payload01."Minimum Bill Qty" as :number) when (payload01."Minimum Bill Qty" != null and payload01."Minimum Bill Qty" != ""),
+	(Active__c: payload01.Active as :boolean) when (payload01.Active != null and payload01.Active != ""),
+	Pricing_Applied__c: payload01."Pricing Applied",
+	Minimum_Type__c: payload01."Minimum Type",
+	//(Current_Threshold_Value__c: payload01."Current Threshold Value" as :number) when (payload01."Current Threshold Value" != null and payload01."Current Threshold Value" != ""),
+	
+	(Verified__c: payload01.Verified as :boolean) when (payload01.Verified != null and payload01.Verified != ""),
+	(Expiration_Date__c: (payload01."Expiration Date" ++ 'T00:00:00.000Z') as :datetime {format: "MM/dd/yyyy'T'HH:mm:ss.SSSX"}) when (payload01."Expiration Date" != null and payload01."Expiration Date" != "" ),
+	Segment__c: payload01.Segment,
+	//Approved_Destination__c: payload01."Approved Destination",
+   (SubscriptionPriceEndDate__c: (payload01."Subscription Price End Date" ++ 'T00:00:00.000Z') as :datetime {format: "MM/dd/yyyy'T'HH:mm:ss.SSSX"}) when (payload01."Subscription Price End Date" != null and payload01."Subscription Price End Date" != ""),
+(SubscriptionPriceStartDate__c: (payload01."Subscription Price Start Date" ++ 'T00:00:00.000Z') as :datetime {format: "MM/dd/yyyy'T'HH:mm:ss.SSSX"}) when (payload01."Subscription Price Start Date" != null and payload01."Subscription Price Start Date" != ""),
+	SubscriptionType__c: payload01."Subscription Type",
+	Contract__c: (lookup("ContractId", payload01.Contract)[0].Id when lookup("ContractId", payload01.Contract)[0].Id != null otherwise "") when (payload01.Contract != null and payload01.Contract != "") otherwise "",
+	Programs__c: payload01.Programs,
+	Source__c:"Mass Upload",
+	Threshold__c: payload01.Threshold,
+	Waste_Profile__c: payload01."Waste Profile",
+	Zone__c: payload01."Zone"
+})]]></dw:set-variable>
+            <dw:set-variable variableName="originalPayload"><![CDATA[%dw 1.0
+%output application/java
+---
+payload map ((payload01 , indexOfPayload01) -> {
+	Account__c: payload01.Account,
+	//(Case_by_case_pricing__c: payload01."Case-by-case pricing" as :boolean) when (payload01."Case-by-case pricing" != null and payload01."Case-by-case pricing" != ""),
+	//Customer_Price_Book__c: payload01."Customer Price Book",
+	//Item_Description__c: payload01."Item Description",
+	(Price__c: payload01.Price as :string) when (payload01.Price != null and payload01.Price != ""),
+	//Product_Family__c: payload01."Product Family",
+	(Product__c: lookup("massuploadingFlow2", payload01.Product)[0].Id) when lookup("massuploadingFlow2", payload01.Product)[0].Id != null,
+	Product_Description__c: payload01."Product Description",
+	(Profile_Special_Pricing__c: payload01."Profile Special Pricing" as :boolean) when (payload01."Profile Special Pricing" != null and payload01."Profile Special Pricing" != ""), 
+	(Stericycle_Location__c: lookup("massuploadingFlow1", payload01."Pricing Location")[0].Id) when lookup("massuploadingFlow1", payload01."Pricing Location")[0].Id != null,
+	UOM__c: payload01.UOM,
+	Waste_Profile__c: payload01."Waste Profile",
+	//Project_Id__c: payload01."Project Id",
+	//Contract_Id__c: payload01."Contract Id",
+	Threshold_Price__c: payload01."Threshold Price",
+	(Subscription_Price__c: payload01."Subscription Price" as :string) when (payload01."Subscription Price" != null and payload01."Subscription Price" != ""),
+	(Minimum_Price__c: payload01."Minimum Price" as :string) when (payload01."Minimum Price" != null and payload01."Minimum Price" != ""),
+	(Minimum_Bill_Qty__c: payload01."Minimum Bill Qty" as :number) when (payload01."Minimum Bill Qty" != null and payload01."Minimum Bill Qty" != ""),
+	(Active__c: payload01.Active as :boolean) when (payload01.Active != null and payload01.Active != ""),
+	Pricing_Applied__c: payload01."Pricing Applied",
+	Minimum_Type__c: payload01."Minimum Type",
+	//(Current_Threshold_Value__c: payload01."Current Threshold Value" as :number) when (payload01."Current Threshold Value" != null and payload01."Current Threshold Value" != ""),
+	
+	(Verified__c: payload01.Verified as :boolean) when (payload01.Verified != null and payload01.Verified != ""),
+	(Expiration_Date__c: (payload01."Expiration Date" ++ 'T00:00:00.000Z') as :datetime {format: "MM/dd/yyyy'T'HH:mm:ss.SSSX"}) when (payload01."Expiration Date" != null and payload01."Expiration Date" != "" ),
+	Segment__c: payload01.Segment,
+	//Approved_Destination__c: payload01."Approved Destination",
+   (SubscriptionPriceEndDate__c: (payload01."Subscription Price End Date" ++ 'T00:00:00.000Z') as :datetime {format: "MM/dd/yyyy'T'HH:mm:ss.SSSX"}) when (payload01."Subscription Price End Date" != null and payload01."Subscription Price End Date" != ""),
+(SubscriptionPriceStartDate__c: (payload01."Subscription Price Start Date" ++ 'T00:00:00.000Z') as :datetime {format: "MM/dd/yyyy'T'HH:mm:ss.SSSX"}) when (payload01."Subscription Price Start Date" != null and payload01."Subscription Price Start Date" != ""),
+	SubscriptionType__c: payload01."Subscription Type",
+	Contract__c: (lookup("ContractId", payload01.Contract)[0].Id when lookup("ContractId", payload01.Contract)[0].Id != null otherwise "") when (payload01.Contract != null and payload01.Contract != "") otherwise "",
+	Programs__c: payload01.Programs,
+	Source__c:"Mass Upload",
+	Threshold__c: payload01.Threshold,
+	Waste_Profile__c: payload01."Waste Profile",
+	Zone__c: payload01."Zone"
+})]]></dw:set-variable>
+        </dw:transform-message>
+        <set-variable variableName="recordPayload" value="null" doc:name="init recordPayload - Variable"/>
+        <foreach collection="#[flowVars.inactiveRecords]" doc:name="For Each">
+            <flow-ref name="massuploadingSub_Flow" doc:name="Flow Reference"/>
+
+        </foreach>
+
+        <choice doc:name="Choice">
+            <when expression="#[payload.size() &gt; 0]">
+                <sfdc:create config-ref="Salesforce__Basic_Authentication" type="Price_Book_Entry__c" doc:name="Salesforce">
+                    <sfdc:objects ref="#[payload]"/>
+                </sfdc:create>
+                <dw:transform-message doc:name="Transform Message">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+payload]]></dw:set-payload>
+                </dw:transform-message>
+                <dw:transform-message doc:name="Transform Message">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+payload]]></dw:set-payload>
+                </dw:transform-message>
+                <logger message="salesforce response ---&gt; #[message.payloadAs(java.lang.String)]" level="INFO" doc:name="Logger"/>
+                <foreach counterVariableName="counter1" doc:name="For Each">
+                    <set-variable variableName="index" value="#[flowVars.counter1-1]" doc:name="Variable"/>
+                    <choice doc:name="Choice">
+                        <when expression="#[payload.success=='true']">
+                            <dw:transform-message doc:name="Transform Message">
+                                <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	Account: flowVars.originalPayload[flowVars.index].Account__c,
+	"Status" : "Success",
+	"Error": null,
+	Active: flowVars.originalPayload[flowVars.index].Active__c,
+	//"Approved Destination": flowVars.originalPayload[flowVars.index].Approved_Destination__c,
+	//"Case-by-case pricing": flowVars.originalPayload[flowVars.index].Case_by_case_pricing__c,
+	//Contract: flowVars.originalPayload[flowVars.index].,
+	//"Contract Id": flowVars.originalPayload[flowVars.index].Contract_Id__c,
+	//"Current Threshold Value": flowVars.originalPayload[flowVars.index].,
+	//"Customer Price Book": flowVars.originalPayload[flowVars.index].Customer_Price_Book__c,
+	//"Expiration Date": flowVars.originalPayload[flowVars.index].,
+	//"Item Description": flowVars.originalPayload[flowVars.index].Item_Description__c,
+	"Minimum Bill Qty": flowVars.originalPayload[flowVars.index].Minimum_Bill_Qty__c,
+	"Minimum Price": flowVars.originalPayload[flowVars.index].Minimum_Price__c,
+	//"Minimum Type": flowVars.originalPayload[flowVars.index].,
+	Price: flowVars.originalPayload[flowVars.index].Price__c,
+	"Pricing Applied": flowVars.originalPayload[flowVars.index].Pricing_Applied__c,
+	"Pricing Location": flowVars.originalPayload[flowVars.index].Stericycle_Location__c,
+	Product: flowVars.originalPayload[flowVars.index].Product__c,
+	//"Product Family": flowVars.originalPayload[flowVars.index].Product_Family__c,
+	"Product Description": flowVars.originalPayload[flowVars.index].Product_Description__c,
+	"Profile Special Pricing": flowVars.originalPayload[flowVars.index].Profile_Special_Pricing__c,
+//Programs: flowVars.originalPayload[flowVars.index].,
+	//Project: flowVars.originalPayload[flowVars.index].,
+	//"Project Id": flowVars.originalPayload[flowVars.index].,
+	//Segment: flowVars.originalPayload[flowVars.index].,
+	//Source: flowVars.originalPayload[flowVars.index].,
+	"Subscription Price": flowVars.originalPayload[flowVars.index].Subscription_Price__c,
+	//"Subscription Price End Date": flowVars.originalPayload[flowVars.index].,
+	//"Subscription Price Start Date": flowVars.originalPayload[flowVars.index].,
+	//"Subscription Type": flowVars.originalPayload[flowVars.index].,
+	Threshold: flowVars.originalPayload[flowVars.index].Threshold_Price__c,
+	//"Threshold Price": flowVars.originalPayload[flowVars.index].,
+	UOM: flowVars.originalPayload[flowVars.index].UOM__c,
+	//Verified: flowVars.originalPayload[flowVars.index].,
+	"Waste Profile": flowVars.originalPayload[flowVars.index].Waste_Profile__c
+
+}]]></dw:set-payload>
+                            </dw:transform-message>
+                            <set-variable variableName="recordPayload" value="#[flowVars.recordPayload] , #[payload]" doc:name="set RecordStore - Variable"/>
+                            <logger message="Email Notification Sent" level="INFO" doc:name="Logger"/>
+                        </when>
+                        <otherwise>
+                            <logger message="Creation and Activation unsuccessful" level="INFO" doc:name="Logger"/>
+                            <set-variable variableName="msg" value="#[payload.errors.toString()]" doc:name="Variable"/>
+                            <dw:transform-message doc:name="Transform Message">
+                                <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	Account: flowVars.originalPayload[flowVars.index].Account__c,
+	"Status" : "Business Error",
+	"Error": flowVars.msg,
+	Active: flowVars.originalPayload[flowVars.index].Active__c,
+//	"Approved Destination": flowVars.originalPayload[flowVars.index].Approved_Destination__c,
+	//"Case-by-case pricing": flowVars.originalPayload[flowVars.index].Case_by_case_pricing__c,
+	// Contract: flowVars.originalPayload[flowVars.index].,
+//	"Contract Id": flowVars.originalPayload[flowVars.index].Contract_Id__c,
+	// "Current Threshold Value": flowVars.originalPayload[flowVars.index].,
+//	"Customer Price Book": flowVars.originalPayload[flowVars.index].Customer_Price_Book__c,
+	// "Expiration Date": flowVars.originalPayload[flowVars.index].,
+	//"Item Description": flowVars.originalPayload[flowVars.index].Item_Description__c,
+	"Minimum Bill Qty": flowVars.originalPayload[flowVars.index].Minimum_Bill_Qty__c,
+	"Minimum Price": flowVars.originalPayload[flowVars.index].Minimum_Price__c,
+	// "Minimum Type": flowVars.originalPayload[flowVars.index].,
+	Price: flowVars.originalPayload[flowVars.index].Price__c,
+	"Pricing Applied": flowVars.originalPayload[flowVars.index].Pricing_Applied__c,
+	"Pricing Location": flowVars.originalPayload[flowVars.index].Stericycle_Location__c,
+	Product: flowVars.originalPayload[flowVars.index].Product__c,
+	//"Product Family": flowVars.originalPayload[flowVars.index].Product_Family__c,
+	"Product Description": flowVars.originalPayload[flowVars.index].Product_Description__c,
+	"Profile Special Pricing": flowVars.originalPayload[flowVars.index].Profile_Special_Pricing__c,
+//Programs: flowVars.originalPayload[flowVars.index].,
+	// Project: flowVars.originalPayload[flowVars.index].,
+	// "Project Id": flowVars.originalPayload[flowVars.index].,
+	// Segment: flowVars.originalPayload[flowVars.index].,
+	// Source: flowVars.originalPayload[flowVars.index].,
+	"Subscription Price": flowVars.originalPayload[flowVars.index].Subscription_Price__c,
+	// "Subscription Price End Date": flowVars.originalPayload[flowVars.index].,
+	// "Subscription Price Start Date": flowVars.originalPayload[flowVars.index].,
+	// "Subscription Type": flowVars.originalPayload[flowVars.index].,
+	Threshold: flowVars.originalPayload[flowVars.index].Threshold_Price__c,
+	// "Threshold Price": flowVars.originalPayload[flowVars.index].,
+	UOM: flowVars.originalPayload[flowVars.index].UOM__c,
+	// Verified: flowVars.originalPayload[flowVars.index].,
+	"Waste Profile": flowVars.originalPayload[flowVars.index].Waste_Profile__c
+}
+]]></dw:set-payload>
+                            </dw:transform-message>
+                            <set-variable variableName="recordPayload" value="#[flowVars.recordPayload] , #[payload]" doc:name="set RecordStore - Variable"/>
+                        </otherwise>
+                    </choice>
+                </foreach>
+                <set-payload value="[#[flowVars.recordPayload]]" mimeType="application/json" doc:name="Set Payload"/>
+                <dw:transform-message doc:name="Transform Message">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/csv
+---
+payload -null]]></dw:set-payload>
+                </dw:transform-message>
+                <file:outbound-endpoint path="${opFile}" outputPattern="#[message.inboundProperties.originalFilename]" connector-ref="File" responseTimeout="10000" doc:name="File"/>
+
+
+            </when>
+            <otherwise>
+                <logger message="No Active Records to Process" level="INFO" doc:name="Logger"/>
+            </otherwise>
+        </choice>
+
+        <catch-exception-strategy doc:name="massuploadingCatch_Exception_Strategy">
+            <set-variable variableName="exception" value="#[exception.message.toString()]" doc:name="Variable"/>
+            <dw:transform-message doc:name="Transform Message" metadata:id="1a41bcde-8499-4d52-83d0-d8fe0f9987ab">
+                <dw:input-payload mimeType="application/csv"/>
+                <dw:set-payload><![CDATA[%dw 1.0
+%output application/csv
+---
+[{
+	Account: flowVars.originalPayload[0].Account__c,
+		"Status" : "Technical Error",
+	"Error": flowVars.exception,
+	Active: flowVars.originalPayload[0].Active__c,
+//	"Approved Destination": flowVars.originalPayload[0].Approved_Destination__c,
+	"Case-by-case pricing": flowVars.originalPayload[0].Case_by_case_pricing__c,
+	//Contract: flowVars.originalPayload[0].,
+	"Contract Id": flowVars.originalPayload[0].Contract_Id__c,
+	//"Current Threshold Value": flowVars.originalPayload[0].,
+	"Customer Price Book": flowVars.originalPayload[0].Customer_Price_Book__c,
+	//"Expiration Date": flowVars.originalPayload[0].,
+	"Item Description": flowVars.originalPayload[0].Item_Description__c,
+	"Minimum Bill Qty": flowVars.originalPayload[0].Minimum_Bill_Qty__c,
+	"Minimum Price": flowVars.originalPayload[0].Minimum_Price__c,
+	//"Minimum Type": flowVars.originalPayload[0].,
+	Price: flowVars.originalPayload[0].Price__c,
+	"Pricing Applied": flowVars.originalPayload[0].Pricing_Applied__c,
+	"Pricing Location": flowVars.originalPayload[0].Stericycle_Location__c,
+	Product: flowVars.originalPayload[0].Product__c,
+	"Product Family": flowVars.originalPayload[0].Product_Family__c,
+	"Profile Price Entry Description": flowVars.originalPayload[0].Product_Description__c,
+	"Profile Special Pricing": flowVars.originalPayload[0].Profile_Special_Pricing__c,
+//Programs: flowVars.originalPayload[0].,
+	//Project: flowVars.originalPayload[0].,
+	//"Project Id": flowVars.originalPayload[0].,
+	//Segment: flowVars.originalPayload[0].,
+	//Source: flowVars.originalPayload[0].,
+	"Subscription Price": flowVars.originalPayload[0].Subscription_Price__c,
+	//"Subscription Price End Date": flowVars.originalPayload[0].,
+	//"Subscription Price Start Date": flowVars.originalPayload[0].,
+	//"Subscription Type": flowVars.originalPayload[0].,
+	Threshold: flowVars.originalPayload[0].Threshold_Price__c,
+	//"Threshold Price": flowVars.originalPayload[0].,
+	UOM: flowVars.originalPayload[0].UOM__c,
+	//Verified: flowVars.originalPayload[0].,
+	"Waste Profile": flowVars.originalPayload[0].Waste_Profile__c
+
+}]
+]]></dw:set-payload>
+                <dw:set-variable variableName="inactiveRows"><![CDATA[%dw 1.0
+%output application/csv
+---
+[{
+	Account: flowVars.inactiveRecords[0].Account__c,
+	"Status" : "Technical Error",
+	"Error": flowVars.exception,
+	Active: flowVars.inactiveRecords[0].Active__c,
+	"Approved Destination": flowVars.inactiveRecords[0].Approved_Destination__c,
+	"Case-by-case pricing": flowVars.inactiveRecords[0].Case_by_case_pricing__c,
+	//Contract: flowVars.inactiveRecords[0].,
+	"Contract Id": flowVars.inactiveRecords[0].Contract_Id__c,
+	//"Current Threshold Value": flowVars.inactiveRecords[0].,
+	"Customer Price Book": flowVars.inactiveRecords[0].Customer_Price_Book__c,
+	//"Expiration Date": flowVars.inactiveRecords[0].,
+	"Item Description": flowVars.inactiveRecords[0].Item_Description__c,
+	"Minimum Bill Qty": flowVars.inactiveRecords[0].Minimum_Bill_Qty__c,
+	"Minimum Price": flowVars.inactiveRecords[0].Minimum_Price__c,
+	//"Minimum Type": flowVars.inactiveRecords[0].,
+	Price: flowVars.inactiveRecords[0].Price__c,
+	"Pricing Applied": flowVars.inactiveRecords[0].Pricing_Applied__c,
+	"Pricing Location": flowVars.inactiveRecords[0].Stericycle_Location__c,
+	Product: flowVars.inactiveRecords[0].Product__c,
+	"Product Family": flowVars.inactiveRecords[0].Product_Family__c,
+	"Profile Price Entry Description": flowVars.inactiveRecords[0].Product_Description__c,
+	"Profile Special Pricing": flowVars.inactiveRecords[0].Profile_Special_Pricing__c,
+//Programs: flowVars.inactiveRecords[0].,
+	//Project: flowVars.inactiveRecords[0].,
+	//"Project Id": flowVars.inactiveRecords[0].,
+	//Segment: flowVars.inactiveRecords[0].,
+	//Source: flowVars.inactiveRecords[0].,
+	"Subscription Price": flowVars.inactiveRecords[0].Subscription_Price__c,
+	//"Subscription Price End Date": flowVars.inactiveRecords[0].,
+	//"Subscription Price Start Date": flowVars.inactiveRecords[0].,
+	//"Subscription Type": flowVars.inactiveRecords[0].,
+	Threshold: flowVars.inactiveRecords[0].Threshold_Price__c,
+	//"Threshold Price": flowVars.inactiveRecords[0].,
+	UOM: flowVars.inactiveRecords[0].UOM__c,
+	//Verified: flowVars.inactiveRecords[0].,
+	"Waste Profile": flowVars.inactiveRecords[0].Waste_Profile__c
+
+}]
+]]></dw:set-variable>
+            </dw:transform-message>
+            <file:outbound-endpoint path="\\stericorp.com\shares\SteriVision\Mass Upload\Dev\Archive" outputPattern="#[message.inboundProperties.OriginalFileName]" connector-ref="File" responseTimeout="10000" doc:name="File"/>
+            <set-payload value="#[flowVars.inactiveRows]" doc:name="Set Payload"/>
+            <file:outbound-endpoint path="\\stericorp.com\shares\SteriVision\Mass Upload\Dev\Archive" outputPattern="#[message.inboundProperties.originalFileName]" connector-ref="File" responseTimeout="10000" doc:name="File"/>
+        </catch-exception-strategy>
+    </flow>
+    <flow name="massuploadingFlow1">
+        <sfdc:query config-ref="Salesforce__Basic_Authentication" query="dsql:SELECT Id FROM ESDLocation__c where Location_Code__c = '#[payload]'" doc:name="Salesforce"/>
+    </flow>
+    <sub-flow name="massuploadingSub_Flow">
+        <set-variable variableName="currentRecord" value="#[payload]" doc:name="Variable"/>
+        <sfdc:query config-ref="Salesforce__Basic_Authentication" query="dsql:SELECT Id,Account__c,Active__c,Price__c,Product__c,Stericycle_Location__c,UOM__c FROM Price_Book_Entry__c where (Active__c = true and Account__c = '#[payload.Account__c]' and Price__c = #[payload.Price__c] and Product__c = '#[payload.Product__c]' and Stericycle_Location__c = '#[payload.Stericycle_Location__c]' and UOM__c = '#[payload.UOM__c]')" doc:name="Salesforce"/>
+        <dw:transform-message doc:name="Transform Message">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+payload]]></dw:set-payload>
+        </dw:transform-message>
+        <dw:transform-message doc:name="Transform Message">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+payload]]></dw:set-payload>
+        </dw:transform-message>
+        <choice doc:name="Choice">
+            <when expression="#[payload.size() &gt; 0]">
+                <dw:transform-message doc:name="Transform Message">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+payload map ((payload01 , indexOfPayload01) -> {
+	Id: payload01.Id,
+	Active__c: false
+})]]></dw:set-payload>
+                </dw:transform-message>
+                <sfdc:update config-ref="Salesforce__Basic_Authentication" type="Price_Book_Entry__c" doc:name="Salesforce">
+                    <sfdc:objects ref="#[payload]"/>
+                </sfdc:update>
+                <dw:transform-message doc:name="Transform Message">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+payload]]></dw:set-payload>
+                </dw:transform-message>
+                <dw:transform-message doc:name="Transform Message">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+payload]]></dw:set-payload>
+                </dw:transform-message>
+                <flow-ref name="inactive-file" doc:name="Flow Reference"/>
+            </when>
+            <otherwise>
+                <logger message="No Active Records Queried" level="INFO" doc:name="Logger"/>
+            </otherwise>
+        </choice>
+    </sub-flow>
+    <flow name="massuploadingFlow2">
+        <sfdc:query config-ref="Salesforce__Basic_Authentication" query="dsql:SELECT Id,Recordtypeid FROM Product2 WHERE (ProductCode = '#[payload]' AND RecordType.name = 'Sterivision Products')" doc:name="Salesforce"/>
+
+    </flow>
+    <flow name="ContractId">
+        <logger message="SELECT Id,Name FROM Contract WHERE Name = '#[payload]'" level="INFO" doc:name="Logger"/>
+        <sfdc:query config-ref="Salesforce__Basic_Authentication" query="dsql:SELECT Id,Name FROM Contract WHERE ContractNumber = '#[payload]'" doc:name="Salesforce"/>
+    </flow>
+</mule>
